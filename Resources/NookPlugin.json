@@ -12,5 +12,9 @@
     "Stores only this module's location, units and cached readings",
     "Includes its own weather worker and runtime; no companion app required",
     "Exports read-only weather status through the shared plugin SDK"
-  ]
+  ],
+  "icon": {
+    "symbol": "cloud.sun.fill",
+    "color": "FFD172"
+  }
 }
