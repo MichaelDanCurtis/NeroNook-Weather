@@ -1,0 +1,1 @@
+{"name":"neronook-weather-build","private":true,"scripts":{"build:worker":"esbuild Worker/main.ts --bundle --platform=node --format=esm --target=node22 --tsconfig=Worker/tsconfig.json --outfile=Resources/worker.mjs"},"devDependencies":{"esbuild":"0.25.12","leaflet":"1.9.4"}}

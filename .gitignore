@@ -1,0 +1,9 @@
+.build/
+build/
+node_modules/
+Runtime/node
+Resources/worker.mjs
+Resources/Web/leaflet*
+Resources/Web/images/
+.DS_Store
+.swiftpm/

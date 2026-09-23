@@ -1,0 +1,3 @@
+# Preserve upstream license text exactly, including its original whitespace.
+Resources/LEAFLET-LICENSE -whitespace
+Runtime/NODE-LICENSE -whitespace

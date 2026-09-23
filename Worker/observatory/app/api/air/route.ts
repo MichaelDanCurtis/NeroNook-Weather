@@ -1,0 +1,3 @@
+import {coordinates,providerFeed,json,failure} from "@/lib/weather-server";
+import type {Air} from "@/lib/weather";
+export async function GET(request:Request){let p;try{p=coordinates(request)}catch{return json({error:"Invalid coordinates"},400)}try{const params=new URLSearchParams({latitude:String(p.lat),longitude:String(p.lon),current:"us_aqi,pm2_5,pm10,ozone,nitrogen_dioxide",timeformat:"unixtime"});const {data,...metadata}=await providerFeed<Air>(`https://air-quality-api.open-meteo.com/v1/air-quality?${params}`,900);if(!data.current)throw new Error("Air quality response incomplete");return json({...data,...metadata})}catch(e){return failure(e)}}

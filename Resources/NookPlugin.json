@@ -1,0 +1,16 @@
+{
+  "apiVersion": 1,
+  "id": "cafe.nero.plugin.weather",
+  "name": "Weather Observatory",
+  "version": "0.1.0",
+  "summary": "Local weather, forecasts, marine conditions, tides, alerts and radar in an independent module.",
+  "capabilities": [
+    "Uses macOS Location access to follow this Mac, with manual place override",
+    "Fetches selected-place forecasts from NOAA, Open-Meteo and MET Norway",
+    "Reads marine, tide, air quality, alert and radar feeds",
+    "Displays attributed weather maps in its own window",
+    "Stores only this module's location, units and cached readings",
+    "Includes its own weather worker and runtime; no companion app required",
+    "Exports read-only weather status through the shared plugin SDK"
+  ]
+}
