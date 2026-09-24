@@ -9,3 +9,4 @@ Resources/Web/images/
 .swiftpm/
 Resources/Views/leaflet*
 Resources/Views/images/
+Resources/Windy/leaflet.js

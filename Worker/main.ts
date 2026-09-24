@@ -1,3 +1,4 @@
+import {startWindy} from './windy-server';
 import {GET as weather} from './observatory/app/api/weather/route';
 import {GET as marine} from './observatory/app/api/marine/route';
 import {GET as air} from './observatory/app/api/air/route';
@@ -6,7 +7,6 @@ import {GET as locations} from './observatory/app/api/locations/route';
 import {GET as radar} from './observatory/app/api/radar/route';
 import {GET as satellite} from './observatory/app/api/satellite/route';
 import {GET as cyclones} from './observatory/app/api/cyclones/route';
-import {GET as wind} from './observatory/app/api/wind/route';
 import {GET as tides} from './observatory/app/api/tides/route';
 import {validPlace} from './observatory/lib/weather';
 import {createInterface} from 'node:readline';
@@ -21,10 +21,16 @@ globalThis.fetch=async(input,init)=>{
  while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>8_000_000){await reader.cancel();throw new Error('Weather response too large')}chunks.push(value)}
  return new Response(Buffer.concat(chunks),{status:response.status,statusText:response.statusText,headers:response.headers});
 };
-const feeds={weather,marine,air,alerts,radar,satellite,cyclones,tides,wind};
+const feeds={weather,marine,air,alerts,radar,satellite,cyclones,tides};
 let active=0;
+let windy:Awaited<ReturnType<typeof startWindy>>|null=null;
+let windyStarting=false;
 async function request(m:any){
  if(!m||typeof m.id!=='string'||m.id.length>60)throw new Error('Invalid request');
+ if(m.action==='windy'){
+  if(windyStarting)throw new Error('Map connection is starting');
+  windyStarting=true;try{windy?.close();windy=null;if(m.key){windy=await startWindy(m.key)}return{id:m.id,feed:'windy',ok:true,data:{url:windy?.url||''}}}finally{windyStarting=false}
+ }
  if(m.action==='search'){
   if(typeof m.query!=='string'||m.query.trim().length<2||m.query.length>100)throw new Error('Enter a place name');
   const r=await locations(new Request('https://local.invalid/?'+new URLSearchParams({q:m.query})));

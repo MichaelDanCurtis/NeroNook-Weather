@@ -28,7 +28,7 @@ public struct PluginWebSurface: NSViewRepresentable {
     public func updateNSView(_ web: WKWebView, context: Context) {
         let previous = context.coordinator.owner
         context.coordinator.owner = self
-        if previous.root != root || previous.panelID != panelID || previous.definition.entry != definition.entry || previous.definition.revision != definition.revision {
+        if previous.root != root || previous.panelID != panelID || previous.definition.entry != definition.entry || previous.definition.revision != definition.revision || previous.definition.frames != definition.frames {
             context.coordinator.load(web)
         } else if previous.definition.state != definition.state { context.coordinator.update(web) }
     }
@@ -86,7 +86,8 @@ public struct PluginWebSurface: NSViewRepresentable {
             let url = navigationAction.request.url
             // Only this document (and fragment links) can navigate. Never open a browser automatically.
             let allowed = !navigationAction.shouldPerformDownload && url?.scheme == PluginViewResources.scheme && url?.host == "surface" && url?.path == "/" + owner.definition.entry && navigationAction.targetFrame?.isMainFrame == true
-            decisionHandler(allowed || url?.absoluteString == "about:blank" ? .allow : .cancel)
+            let embedded = !navigationAction.shouldPerformDownload && navigationAction.targetFrame?.isMainFrame == false && url.map { target in (owner.definition.frames ?? []).contains { $0.allows(target) } } == true
+            decisionHandler(allowed || embedded || url?.absoluteString == "about:blank" ? .allow : .cancel)
         }
         public func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? { nil }
         public func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin, initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType, decisionHandler: @escaping @MainActor @Sendable (WKPermissionDecision) -> Void) { decisionHandler(.deny) }
@@ -134,7 +135,7 @@ public struct PluginWebSurface: NSViewRepresentable {
                 guard assetBytes <= 32 * 1024 * 1024 else { throw ModuleProblem("View resource budget exceeded.") }
                 let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: [
                     "Content-Type": PluginViewResources.mime(file.pathExtension)! + (file.pathExtension == "html" ? "; charset=utf-8" : ""),
-                    "Content-Security-Policy": "default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; worker-src 'none'",
+                    "Content-Security-Policy": "default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; frame-src \((owner.definition.frames ?? []).isEmpty ? "'none'" : (owner.definition.frames ?? []).map(\.origin).joined(separator: " ")); object-src 'none'; base-uri 'none'; form-action 'none'; worker-src 'none'",
                     "X-Content-Type-Options": "nosniff", "Cache-Control": "no-store"
                 ])!
                 urlSchemeTask.didReceive(response); urlSchemeTask.didReceive(data); urlSchemeTask.didFinish()

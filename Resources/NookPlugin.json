@@ -2,14 +2,15 @@
   "apiVersion": 1,
   "id": "cafe.nero.plugin.weather",
   "name": "Weather Observatory",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "summary": "Local weather, forecasts, marine conditions, tides, alerts and radar in an independent module.",
   "capabilities": [
     "Uses macOS Location access to follow this Mac, with manual place override",
     "Fetches selected-place forecasts from NOAA, Open-Meteo and MET Norway",
     "Reads marine, tide, air quality, alert and radar feeds",
-    "Displays attributed maps, radar playback and regional wind inside the Nook",
-    "Stores only this module's location, units and cached readings",
+    "Displays radar playback plus official Windy wind and temperature forecast maps inside the Nook",
+    "Stores this module\u2019s location, units and cache; saves its Windy testing key in Keychain",
+    "Loads Windy\u2019s official map library in an isolated view served by its own loopback worker",
     "Includes its own weather worker and runtime; no companion app required",
     "Exports read-only weather status through the shared plugin SDK"
   ],

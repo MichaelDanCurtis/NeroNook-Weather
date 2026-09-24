@@ -13,8 +13,10 @@ public struct PluginCustomView: Codable, Equatable, Sendable {
     public var events: [PluginViewEventDefinition]
     /// Optional plugin-owned raster resource namespaces. No remote URLs.
     public var resourceNamespaces: [String]?
-    public init(entry: String, revision: String, state: [String: PluginValue] = [:], events: [PluginViewEventDefinition] = [], resourceNamespaces: [String]? = nil) {
-        self.entry = entry; self.revision = revision; self.state = state; self.events = events; self.resourceNamespaces = resourceNamespaces
+    /// Isolated documents served by the plugin's own loopback process. Never host tools.
+    public var frames: [PluginViewFrame]?
+    public init(entry: String, revision: String, state: [String: PluginValue] = [:], events: [PluginViewEventDefinition] = [], resourceNamespaces: [String]? = nil, frames: [PluginViewFrame]? = nil) {
+        self.entry = entry; self.revision = revision; self.state = state; self.events = events; self.resourceNamespaces = resourceNamespaces; self.frames = frames
     }
     public func validate() throws {
         guard PluginViewResources.validPath(entry), entry.hasSuffix(".html"), ModulePackage.validKey(revision),
@@ -22,6 +24,8 @@ public struct PluginCustomView: Codable, Equatable, Sendable {
               events.count <= 16, Set(events.map(\.id)).count == events.count,
               try JSONEncoder().encode(state).count <= 32768 else { throw ModuleProblem("Invalid custom view.") }
         guard (resourceNamespaces?.count ?? 0) <= 4, resourceNamespaces?.allSatisfy({ ModulePackage.validKey($0) && !$0.contains("/") }) ?? true else { throw ModuleProblem("Invalid resource namespaces.") }
+        guard (frames?.count ?? 0) <= 2 else { throw ModuleProblem("Too many embedded documents.") }
+        for frame in frames ?? [] { try frame.validate() }
         for event in events { guard ModulePackage.validKey(event.id) else { throw ModuleProblem("Invalid view event.") }; try event.input.validate() }
     }
     public func validate(_ resource: PluginViewResourceRequest) throws {
@@ -35,6 +39,27 @@ public struct PluginCustomView: Codable, Equatable, Sendable {
         guard event.revision == revision, ModulePackage.validKey(event.panelID),
               let definition = events.first(where: { $0.id == event.name }) else { throw ModuleProblem("This view changed or the event is unavailable.") }
         try definition.input.validate(event.values)
+    }
+}
+
+public struct PluginViewFrame: Codable, Equatable, Sendable {
+    public var url: String
+    public init(url: String) { self.url = url }
+    public func validate() throws {
+        guard url.utf8.count <= 512, let value = URLComponents(string: url),
+              value.scheme == "http", value.host == "127.0.0.1", let port = value.port,
+              (1024...65535).contains(port), value.user == nil, value.password == nil,
+              value.query == nil, value.fragment == nil,
+              PluginViewResources.validPath(String(value.path.dropFirst())),
+              value.path.hasSuffix(".html"), value.percentEncodedPath == value.path else {
+            throw ModuleProblem("Invalid plugin-owned document.")
+        }
+    }
+    public var origin: String { guard let value = URLComponents(string: url), let port = value.port else { return "" }; return "http://127.0.0.1:\(port)" }
+    public func allows(_ candidate: URL) -> Bool {
+        guard (try? validate()) != nil, var value = URLComponents(url: candidate, resolvingAgainstBaseURL: false) else { return false }
+        value.fragment = nil
+        return value.string == url
     }
 }
 public struct PluginViewEvent: Codable, Equatable, Sendable {
