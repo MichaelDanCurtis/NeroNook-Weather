@@ -14,8 +14,8 @@ function harness(){
 test('Earth preserves exploration on refresh and changes only for layer, place or recenter',()=>{
  const h=harness();h.run('renderWindy()');const frame=h.created[0];assert.match(frame.url,/earth\.nullschool\.net\/\#current\/wind/);assert.match(frame.url,/orthographic=-122\.3,47\.6,1200/);
  h.run('renderWindy();state.unit="C";renderWindy()');assert.equal(frame.writes,1);
- h.run('layer="temp";renderWindy()');assert.match(frame.url,/overlay=temp/);assert.equal(frame.writes,2);
- h.run('recenterCount++;renderWindy()');assert.equal(frame.writes,3);
+ h.run('layer="temp";renderWindy()');const temperature=h.created[1];assert.equal(frame.removed,true);assert.match(temperature.url,/overlay=temp/);assert.equal(temperature.writes,1);
+ h.run('recenterCount++;renderWindy()');assert.equal(temperature.writes,2);
 });
 test('Switching provider releases the previous viewer and missing credentials show setup',()=>{
  const h=harness();h.run('renderWindy()');const earth=h.created[0];h.run('state.mapProvider="windy";renderWindy()');const windy=h.created[1];assert.equal(earth.removed,true);assert.match(windy.url,/layer=wind.*unit=F/);

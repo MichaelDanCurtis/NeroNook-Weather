@@ -29,7 +29,7 @@ struct WindySettings: View {
             }.pickerStyle(.segmented)
             if model.preferences.mapProvider == .earth {
                 Text("Earth by Nullschool").font(.headline)
-                Text("Explore the public wind and temperature globe right here. No account or key is needed. Earth keeps its own menus, units, dates and source labels.").foregroundStyle(.secondary)
+                Text("See wind and temperature previews in the Nook. Open Earth viewer for its full menu, zoom, units and dates. No account or key is needed.").foregroundStyle(.secondary)
                 Text("Use the provider selector on the map to switch at any time. Your saved Windy key stays in Keychain.").font(.callout).foregroundStyle(.secondary)
                 Link("About Earth and its data",destination:URL(string:"https://earth.nullschool.net/about.html")!)
             } else {

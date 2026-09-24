@@ -16,7 +16,7 @@ extension WeatherModule {
         payload["windyMessage"]=allowFrames ? windyMessage:"Update NeroNook to show Windy here, or open Observatory."
         let bytes=(try? JSONSerialization.data(withJSONObject:payload,options:[.sortedKeys])) ?? Data()
         let data=bytes.count<=28000 ? String(data:bytes,encoding:.utf8) ?? "{}" : "{\"ready\":false,\"message\":\"Weather data exceeded the view limit. Open settings to refresh.\"}"
-        return .init(entry:"observatory.html",revision:"observatory4",state:["data":.string(data)],events:[.init("settings"),.init("alerts"),.init("refresh"),.init("windySettings"),.init("mapProvider",input:.init([.init("provider",.string)])),.init("unit",input:.init([.init("unit",.string)]))],resourceNamespaces:["tiles"],frames:frames.isEmpty ? nil:frames)
+        return .init(entry:"observatory.html",revision:"observatory4",state:["data":.string(data)],events:[.init("settings"),.init("alerts"),.init("refresh"),.init("windySettings"),.init("earthViewer",input:.init([.init("layer",.string)])),.init("mapProvider",input:.init([.init("provider",.string)])),.init("unit",input:.init([.init("unit",.string)]))],resourceNamespaces:["tiles"],frames:frames.isEmpty ? nil:frames)
     }
     func handleViewEvent(_ event: PluginViewEvent) throws {
         guard event.panelID=="observatory" else { throw ModuleProblem("Unknown weather view.") }
@@ -26,6 +26,7 @@ extension WeatherModule {
         case "alerts": showSettings("Alerts")
         case "refresh": refresh()
         case "windySettings": showSettings("Sources")
+        case "earthViewer": if case .string(let layer)=event.values["layer"] { showEarth(layer) }
         case "mapProvider": if case .string(let value)=event.values["provider"] { setMapProvider(value) }
         case "unit": if case .string(let unit)=event.values["unit"] { setUnit(unit) }
         default: break
