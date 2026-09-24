@@ -7,3 +7,5 @@ Resources/Web/leaflet*
 Resources/Web/images/
 .DS_Store
 .swiftpm/
+Resources/Views/leaflet*
+Resources/Views/images/

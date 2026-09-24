@@ -6,6 +6,7 @@ import {GET as locations} from './observatory/app/api/locations/route';
 import {GET as radar} from './observatory/app/api/radar/route';
 import {GET as satellite} from './observatory/app/api/satellite/route';
 import {GET as cyclones} from './observatory/app/api/cyclones/route';
+import {GET as wind} from './observatory/app/api/wind/route';
 import {GET as tides} from './observatory/app/api/tides/route';
 import {validPlace} from './observatory/lib/weather';
 import {createInterface} from 'node:readline';
@@ -20,7 +21,7 @@ globalThis.fetch=async(input,init)=>{
  while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>8_000_000){await reader.cancel();throw new Error('Weather response too large')}chunks.push(value)}
  return new Response(Buffer.concat(chunks),{status:response.status,statusText:response.statusText,headers:response.headers});
 };
-const feeds={weather,marine,air,alerts,radar,satellite,cyclones,tides};
+const feeds={weather,marine,air,alerts,radar,satellite,cyclones,tides,wind};
 let active=0;
 async function request(m:any){
  if(!m||typeof m.id!=='string'||m.id.length>60)throw new Error('Invalid request');
