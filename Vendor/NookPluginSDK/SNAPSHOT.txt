@@ -1,5 +1,5 @@
-Vendored shared SDK source snapshot for host 0.26.0, September 24, 2026.
-Source: independently maintained NeroNook SDK/NookPluginSDK, host commit 6acd905.
+Vendored shared SDK source snapshot for host 0.26.1, September 24, 2026.
+Source: independently maintained NeroNook SDK/NookPluginSDK, host commit ccbcdec.
 This package builds without a host checkout.
 
 SHA-256:
@@ -10,7 +10,7 @@ c2024e9751df97eb3d4cc34392ddd4362e2cd5882480d40d43d990986953494e  Sources/NookPl
 7191e1cae30b6be4ea05b2e79a88cd4ba6cb71b1cf2cd1d5001f20a0eeaf4006  Sources/NookPluginSDK/PluginApplicationChannel.swift
 adac753c6a4a6d84f55511325caebf462d85865d7d6a07293ab26435f9a8ae2a  Sources/NookPluginSDK/PluginCollection.swift
 75687c56d3082892471c8347ebaae6e4981402bed116ad7e2fc97df16310bdeb  Sources/NookPluginSDK/PluginCollectionView.swift
-e302fecbfcfa1af911b1fb2d6a9508b6cb9ae54a9825a15021b32191ab045a92  Sources/NookPluginSDK/PluginCustomView.swift
+6a21aaffd472c4e99fc11dc3bf454c41a27d49f9699e2b8dce8e684609d31f51  Sources/NookPluginSDK/PluginCustomView.swift
 bd2ca23c94eb0939f84abfd2e7398c68257631e282af5491e458dffd1cd1a42f  Sources/NookPluginSDK/PluginDiagram.swift
 b2325c59245d08fb444d52a09d88d8542ccd580cff6569df7727e49ff29e4da5  Sources/NookPluginSDK/PluginForm.swift
 8971cf48f7c0a9d3180d4460855698ff05b10448ebc143f21cf0194e3764ada8  Sources/NookPluginSDK/PluginIcon.swift

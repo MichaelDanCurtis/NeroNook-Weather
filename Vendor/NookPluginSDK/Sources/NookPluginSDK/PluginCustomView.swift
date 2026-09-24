@@ -13,7 +13,7 @@ public struct PluginCustomView: Codable, Equatable, Sendable {
     public var events: [PluginViewEventDefinition]
     /// Optional plugin-owned raster resource namespaces. No remote URLs.
     public var resourceNamespaces: [String]?
-    /// Isolated documents served by the plugin's own loopback process. Never host tools.
+    /// Exact isolated loopback or HTTPS documents. Never host tools; HTTPS requires separate negotiation.
     public var frames: [PluginViewFrame]?
     public init(entry: String, revision: String, state: [String: PluginValue] = [:], events: [PluginViewEventDefinition] = [], resourceNamespaces: [String]? = nil, frames: [PluginViewFrame]? = nil) {
         self.entry = entry; self.revision = revision; self.state = state; self.events = events; self.resourceNamespaces = resourceNamespaces; self.frames = frames
@@ -45,17 +45,31 @@ public struct PluginCustomView: Codable, Equatable, Sendable {
 public struct PluginViewFrame: Codable, Equatable, Sendable {
     public var url: String
     public init(url: String) { self.url = url }
+    public var isRemote: Bool { URLComponents(string: url)?.scheme == "https" }
     public func validate() throws {
         guard url.utf8.count <= 512, let value = URLComponents(string: url),
-              value.scheme == "http", value.host == "127.0.0.1", let port = value.port,
-              (1024...65535).contains(port), value.user == nil, value.password == nil,
-              value.query == nil, value.fragment == nil,
-              PluginViewResources.validPath(String(value.path.dropFirst())),
-              value.path.hasSuffix(".html"), value.percentEncodedPath == value.path else {
-            throw ModuleProblem("Invalid plugin-owned document.")
+              value.user == nil, value.password == nil, value.query == nil, value.fragment == nil,
+              value.percentEncodedPath == value.path else { throw ModuleProblem("Invalid embedded document.") }
+        if value.scheme == "http" {
+            guard value.host == "127.0.0.1", let port = value.port, (1024...65535).contains(port),
+                  PluginViewResources.validPath(String(value.path.dropFirst())), value.path.hasSuffix(".html") else {
+                throw ModuleProblem("Invalid plugin-owned document.")
+            }
+        } else {
+            // HTTPS pages are exact documents; reject literal IP and local-suffix hosts.
+            guard value.scheme == "https", value.port == nil, let host = value.host,
+                  host == host.lowercased(), host.utf8.count <= 253,
+                  host.range(of: #"^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$"#, options: .regularExpression) != nil,
+                  !["local", "localhost", "internal", "test", "invalid"].contains(String(host.split(separator: ".").last ?? "")),
+                  value.path == "/" || PluginViewResources.validPath(String(value.path.dropFirst())) else {
+                throw ModuleProblem("Invalid HTTPS document.")
+            }
         }
     }
-    public var origin: String { guard let value = URLComponents(string: url), let port = value.port else { return "" }; return "http://127.0.0.1:\(port)" }
+    public var origin: String {
+        guard (try? validate()) != nil, let value = URLComponents(string: url), let host = value.host else { return "" }
+        return "\(value.scheme!)://\(host)" + (value.port.map { ":\($0)" } ?? "")
+    }
     public func allows(_ candidate: URL) -> Bool {
         guard (try? validate()) != nil, var value = URLComponents(url: candidate, resolvingAgainstBaseURL: false) else { return false }
         value.fragment = nil

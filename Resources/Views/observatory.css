@@ -3,3 +3,5 @@
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 
 #windy-frame{position:absolute;inset:3.9vw 0 0;display:none}#windy-frame iframe{width:100%;height:100%;border:0;display:block}.windy-active #windy-frame{display:block}.windy-active #map,.windy-active .map-location,.windy-active #map-notice,.windy-active .map-legend,.windy-active .timeline,.windy-active .map-credit{display:none!important}#windy-empty{position:absolute;inset:25% 15%;text-align:center;z-index:5;color:#b6ccd5;font-size:.9em}#windy-empty strong{font-size:1.3em;font-weight:500;color:#e0eeec}#windy-empty button{background:#355b58;margin-top:.7em}.windy-active .map-controls{top:.6vw}.windy-active .map-controls button{font-size:.75em}
+
+#map-provider{color:#d4eee7;font:inherit;font-size:.75em;padding:.45em .6em;min-width:12em;margin-left:auto;color-scheme:dark}#map-provider[hidden]{display:none}.map-controls .layer-tabs{white-space:nowrap}#windy-frame iframe{color-scheme:normal}

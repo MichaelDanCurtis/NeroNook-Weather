@@ -22,6 +22,7 @@ async function emit(name,values={}){try{await window.nero.emit(name,values)}catc
 function render(){
  const s=state,c=s.current||{},d=s.daily||{},h=s.hourly||{};
  text('place',s.ready?`${s.place.name}${s.automatic?' · This Mac':''}`:'Weather where you are');text('unit',`°${s.unit||'F'}`);
+ updateUnitControl();
  $('waiting').hidden=!!s.ready;document.querySelectorAll('.page').forEach(el=>el.hidden=!s.ready||el.id!==(page==='map'?'map-page':page));
  text('waiting-message',s.message||'Finding this Mac’s location…');
  if(!s.ready){destroyMap();return}
@@ -70,10 +71,36 @@ function renderCoast(){const m=state.marine||{},station=state.tideStation||{},cu
 let map=null,baseTiles=null,overlay=null,coverage=null,marker=null,mapLocation='',savedMap=null,mapKey='',timer=null,playing=false,baseFailed=false,overlayFailed=false,overlayLoaded=false,windGroup=null;
 const tileURL=(kind,id)=>`nook-view://surface/_plugin/tiles/${kind}/${id}/{z}/{x}/{y}`;
 function destroyRaster(){stopPlay();if(map){savedMap={center:map.getCenter(),zoom:map.getZoom(),place:mapLocation};map.remove()}map=null;baseTiles=overlay=coverage=marker=windGroup=null;mapKey=''}
-let windyFrame=null,windyBase="",recenterCount=0;
-function destroyWindy(){windyFrame?.remove();windyFrame=null;windyBase=""}
+let windyFrame=null,windyBase="",recenterCount=0,providerSignature="";
+function destroyWindy(){windyFrame?.remove();windyFrame=null;windyBase="";providerSignature=""}
 function destroyMap(){destroyRaster();destroyWindy()}
-function renderWindy(){destroyRaster();const endpoint=state.windyURL;$('windy-empty').hidden=!!endpoint;text('windy-message',state.windyMessage||'Add a testing key in Weather settings.');if(!endpoint){destroyWindy();return}const url=new URL(endpoint);if(url.protocol!=='http:'||url.hostname!=='127.0.0.1')return;if(windyBase!==endpoint){destroyWindy();windyBase=endpoint;windyFrame=document.createElement('iframe');windyFrame.title='Windy forecast map';windyFrame.setAttribute('sandbox','allow-scripts allow-same-origin');windyFrame.setAttribute('allow','camera \'none\'; microphone \'none\'; geolocation \'none\'');$('windy-frame').append(windyFrame)}url.hash=new URLSearchParams({layer,lat:state.place.lat,lon:state.place.lon,unit:state.unit,recenter:recenterCount}).toString();if(windyFrame.src!==url.href)windyFrame.src=url.href}
+function renderWindy(){
+ destroyRaster();
+ const earth=state.mapProvider!=='windy',endpoint=earth?state.earthURL:state.windyURL;
+ $('map-provider').value=earth?'earth':'windy';
+ $('windy-empty').hidden=!!endpoint;
+ text('provider-title',earth?'Earth by Nullschool':'Connect Windy');
+ text('windy-message',earth?state.earthMessage:state.windyMessage||'Sign up for your own Map Forecast API key in Weather settings.');
+ if(!endpoint){destroyWindy();return}
+ let url;try{url=new URL(endpoint)}catch{destroyWindy();return}
+ if(earth?endpoint!=='https://earth.nullschool.net/':url.protocol!=='http:'||url.hostname!=='127.0.0.1'){destroyWindy();return}
+ if(windyBase!==endpoint){
+  destroyWindy();windyBase=endpoint;windyFrame=document.createElement('iframe');
+  windyFrame.title=earth?'Earth by Nullschool · public viewer':'Windy forecast map';
+  windyFrame.setAttribute('sandbox','allow-scripts allow-same-origin');
+  windyFrame.setAttribute('allow',"camera 'none'; microphone 'none'; geolocation 'none'");
+  windyFrame.referrerPolicy='no-referrer';$('windy-frame').append(windyFrame);
+ }
+ // Compare requested state, not the remote frame URL: ordinary refreshes must not reset a user's globe exploration.
+ const signature=[endpoint,layer,state.place.id,earth?'':state.unit,recenterCount].join('|');
+ if(signature===providerSignature)return;
+ providerSignature=signature;
+ if(earth){
+  const lat=Math.round(state.place.lat*10)/10,lon=Math.round(state.place.lon*10)/10;
+  url.hash=`current/wind/surface/level/${layer==='temp'?'overlay=temp/':''}orthographic=${lon},${lat},1200`;
+ }else url.hash=new URLSearchParams({layer,lat:state.place.lat,lon:state.place.lon,unit:state.unit,recenter:recenterCount}).toString();
+ windyFrame.src=url.href;
+}
 function setupMap(){if(map)return;map=L.map('map',{zoomControl:false,attributionControl:false,minZoom:3,maxZoom:12,zoomAnimation:false,fadeAnimation:false});baseFailed=false;
  baseTiles=L.tileLayer(tileURL('base','0'),{maxZoom:12,keepBuffer:0,className:'basemap-tile',updateWhenIdle:true}).on('tileerror',()=>{baseFailed=true;mapNotice()}).addTo(map);
  const p=state.place;mapLocation=p.id;map.setView(savedMap?.place===p.id?savedMap.center:[p.lat,p.lon],savedMap?.place===p.id?savedMap.zoom:7);
@@ -83,7 +110,8 @@ function setupMap(){if(map)return;map=L.map('map',{zoomControl:false,attribution
 function frames(){return layer==='radar'?state.radar||[]:layer==='infrared'?state.satellite||[]:[]}
 function frameTime(frame){return typeof frame==='object'?frame.time:frame}
 function mapNotice(){let messages=[];if(baseFailed)messages.push('Some map tiles failed.');if(['radar','infrared'].includes(layer)&&frames().length&&!overlayLoaded&&!overlayFailed)messages.push('Loading imagery…');if(overlayFailed)messages.push('Some imagery failed; coverage is incomplete.');const feed=layer==='infrared'?'satellite':layer;if(state.errors?.[feed])messages.push('Previous data / refresh unavailable.');if(layer!=='base'&&!frames().length)messages.push(state.loading?.includes(feed)?'Loading this layer…':'This layer is unavailable.');text('map-notice',messages.join(' '));}
-function renderMap(){const windy=layer==='wind'||layer==='temp';$('map-page').classList.toggle('windy-active',windy);if(windy){renderWindy();return}destroyWindy();$('windy-empty').hidden=true;setupMap();const p=state.place;if(p.id!==mapLocation){mapLocation=p.id;savedMap=null;stopPlay();map.setView([p.lat,p.lon],7);marker.setLatLng([p.lat,p.lon]);marker.bindTooltip(document.createTextNode(p.name));mapKey=''}
+function updateUnitControl(){$('unit').hidden=page==='map'&&['wind','temp'].includes(layer)&&state.mapProvider!=='windy'}
+function renderMap(){updateUnitControl();const windy=layer==='wind'||layer==='temp';$('map-page').classList.toggle('windy-active',windy);$('map-provider').hidden=!windy;if(windy){renderWindy();return}destroyWindy();$('windy-empty').hidden=true;setupMap();const p=state.place;if(p.id!==mapLocation){mapLocation=p.id;savedMap=null;stopPlay();map.setView([p.lat,p.lon],7);marker.setLatLng([p.lat,p.lon]);marker.bindTooltip(document.createTextNode(p.name));mapKey=''}
  text('map-place',p.name);text('map-temp',temp(state.current?.temperature_2m)+'°');text('map-condition',condition(state.current?.weather_code));
  const fs=frames(),key=layer+'|'+JSON.stringify(fs)+'|'+p.id+'|'+(layer==='wind'?state.unit:'');
  if(key!==mapKey){const previous=mapKey?Number($('frame').value):-1;mapKey=key;frameIndex=previous<0?Math.max(0,fs.length-1):Math.min(frameIndex,Math.max(0,fs.length-1));if(layer==='wind'&&previous<0)frameIndex=0;renderLayer()}
@@ -111,6 +139,6 @@ function setPage(value){if(page!==value&&value!=='map')destroyMap();page=value;d
 document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>setPage(b.dataset.page));document.querySelectorAll('[data-metric]').forEach(b=>b.onclick=()=>{metric=b.dataset.metric;document.querySelectorAll('[data-metric]').forEach(x=>x.classList.toggle('selected',x===b));renderHourly()});
 document.querySelectorAll('[data-layer]').forEach(b=>b.onclick=()=>{stopPlay();layer=b.dataset.layer;mapKey='';frameIndex=layer==='wind'?0:Math.max(0,frames().length-1);$('frame').value=frameIndex;document.querySelectorAll('[data-layer]').forEach(x=>x.classList.toggle('selected',x===b));renderMap()});
 $('hour-select').oninput=e=>{hour=Number(e.target.value);renderHourly()};$('hour-chart').onpointermove=e=>{const box=$('hour-chart').getBoundingClientRect(),n=state.hourly?.time?.length||0;if(n){hour=Math.max(0,Math.min(n-1,Math.round(((e.clientX-box.left)/box.width*500-30)/455*(n-1))));renderHourly()}};
-$('settings').onclick=$('choose-place').onclick=()=>emit('settings');$('alerts').onclick=()=>emit('alerts');$('unit').onclick=()=>emit('unit',{unit:state.unit==='F'?'C':'F'});$('refresh').onclick=()=>emit('refresh');$('frame').oninput=e=>{stopPlay();frameIndex=Number(e.target.value);renderLayer()};$('play').onclick=play;$('latest').onclick=()=>{stopPlay();frameIndex=layer==='wind'?0:frames().length-1;renderLayer()};$('windy-settings').onclick=()=>emit('windySettings');$('recenter').onclick=()=>{if(windyFrame){recenterCount++;renderWindy()}if(map)map.setView([state.place.lat,state.place.lon],7)};
+$('settings').onclick=$('choose-place').onclick=()=>emit('settings');$('alerts').onclick=()=>emit('alerts');$('unit').onclick=()=>emit('unit',{unit:state.unit==='F'?'C':'F'});$('refresh').onclick=()=>emit('refresh');$('frame').oninput=e=>{stopPlay();frameIndex=Number(e.target.value);renderLayer()};$('play').onclick=play;$('latest').onclick=()=>{stopPlay();frameIndex=layer==='wind'?0:frames().length-1;renderLayer()};$('map-provider').onchange=e=>emit('mapProvider',{provider:e.target.value});$('windy-settings').onclick=()=>emit('windySettings');$('recenter').onclick=()=>{if(windyFrame){recenterCount++;renderWindy()}if(map)map.setView([state.place.lat,state.place.lon],7)};
 $('close-day').onclick=()=>{$('day-detail').hidden=true;document.querySelectorAll('header,main').forEach(e=>e.inert=false);$('days').querySelector('button')?.focus()};document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('close-day').click();stopPlay()}});document.addEventListener('visibilitychange',()=>{if(document.hidden)destroyMap();else if(page==='map'&&state.ready)renderMap()});window.addEventListener('pagehide',destroyMap);
 window.nero.onState(value=>{try{state=JSON.parse(value.data||'{}');render()}catch{text('waiting-message','Weather data could not be displayed. Open settings to refresh.')}});

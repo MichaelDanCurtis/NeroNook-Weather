@@ -50,3 +50,12 @@ Official Windy Map Forecast API replaces the sampled regional wind map and adds 
 - Forecast cards and hourly values keep their explicit NOAA/NWS or fallback source. They are not relabeled as Windy. Radar/infrared remain the existing independent feeds. The previous sampled Open-Meteo wind adapter is no longer dispatched by the worker.
 
 Remaining boundaries: Windy testing is development-only (500 sessions/day); production licensing, sustained resource/quota testing and prolonged real network outage/revocation remain release checks. Maps use Windy's documented forecast/timeline UI; the main app supplies location and units. No public release, notarization, paid subscription, or extraction of earth.nullschool data/assets occurred.
+
+## September 24 · Weather Observatory 0.4.0 candidate
+
+- A saved Earth/Windy provider selector is available in the Wind/Temperature toolbar and Sources settings. Earth defaults to an unmodified public HTTPS viewer with no account. Windy has explicit user-owned signup/key setup; no shared key or account subscription is created. Existing location, units and private key are preserved.
+- Host 0.26.1 adds generic, separately negotiated exact HTTPS frames; provider code remains entirely in the independent package. Older hosts get the existing diagram/custom-view fallback and an upgrade message for embedded Earth.
+- Nine Swift tests, fourteen worker/controller tests, four protocol modes, host tests and candidate signatures pass. Regression coverage includes preference migration, provider persistence, globe exploration surviving ordinary refreshes, unloading the old viewer, missing-key setup and bounded remote document URLs.
+- Native rendering/install is pending: computer control reported the Mac locked. The direct Earth website rendered in the research browser; its iframe prototype was blocked by that browser client, so it does not establish native WebKit acceptance. No claim of installed/live Earth acceptance is made yet.
+
+Release boundaries: this public website view is not an Earth API or redistribution license. Windy's testing tier stays development-only. Production provider rights, long outage handling and profiling remain release work.

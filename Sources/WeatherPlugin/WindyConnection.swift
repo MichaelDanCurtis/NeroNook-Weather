@@ -1,6 +1,7 @@
 import Foundation
 import Security
 import SwiftUI
+import WeatherCore
 
 /// The provider key never enters host snapshots, settings JSON, arguments or logs.
 enum WindyKey {
@@ -22,17 +23,30 @@ struct WindySettings: View {
     @State private var key=""
     var body:some View {
         VStack(alignment:.leading,spacing:14){
-            Text("Windy maps").font(.title2.bold())
-            Text("Animated wind and temperature maps from Windy · GFS forecast.").foregroundStyle(.secondary)
-            Text(model.windyMessage).foregroundStyle(model.windyURL.isEmpty ? Color.secondary:Color.green)
-            SecureField("Map Forecast API testing key",text:$key).textFieldStyle(.roundedBorder)
-            HStack {
-                Button("Save Windy key"){model.saveWindyKey(key);key=""}.disabled(key.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty)
-                Button("Reconnect"){model.connectWindy()}.disabled(!model.hasWindyKey)
-                Button("Remove key"){model.removeWindyKey()}.disabled(!model.hasWindyKey)
+            Text("Wind & temperature maps").font(.title2.bold())
+            Picker("Map provider",selection:Binding(get:{model.preferences.mapProvider},set:{model.setMapProvider($0.rawValue)})){
+                ForEach(MapProvider.allCases,id:\.self){Text($0.title).tag($0)}
+            }.pickerStyle(.segmented)
+            if model.preferences.mapProvider == .earth {
+                Text("Earth by Nullschool").font(.headline)
+                Text("Explore the public wind and temperature globe right here. No account or key is needed. Earth keeps its own menus, units, dates and source labels.").foregroundStyle(.secondary)
+                Text("Use the provider selector on the map to switch at any time. Your saved Windy key stays in Keychain.").font(.callout).foregroundStyle(.secondary)
+                Link("About Earth and its data",destination:URL(string:"https://earth.nullschool.net/about.html")!)
+            } else {
+                Text("Your Windy account").font(.headline)
+                Text("Each user connects their own Map Forecast API key. A regular Windy or Premium login alone does not enable these maps.").foregroundStyle(.secondary)
+                Link("1. Sign up or sign in to Windy",destination:URL(string:"https://api.windy.com/keys")!)
+                Text("2. Create a Map Forecast API key for NeroNook. For local testing, use app ID cafe.nero.plugin.weather and allow localhost and 127.0.0.1.").font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
+                Text("3. Paste your key below. It stays in this plugin’s Keychain.").font(.callout).foregroundStyle(.secondary)
+                SecureField("Your Map Forecast API key",text:$key).textFieldStyle(.roundedBorder)
+                HStack {
+                    Button("Save Windy key"){model.saveWindyKey(key);key=""}.disabled(key.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty)
+                    Button("Reconnect"){model.connectWindy()}.disabled(!model.hasWindyKey)
+                    Button("Remove key"){model.removeWindyKey()}.disabled(!model.hasWindyKey)
+                }
+                Text(model.windyMessage).foregroundStyle(model.windyURL.isEmpty ? Color.secondary:Color.green)
+                Text("The free testing key is for development only (500 sessions/day). Production use needs an appropriate Windy plan. Choosing Windy does not sign you up or start a subscription.").font(.callout).foregroundStyle(.secondary)
             }
-            Text("Stored in this plugin’s Keychain. Windy loads directly only while its map is shown. The free testing key is for development, with up to 500 sessions per day. No subscription is started.").font(.callout).foregroundStyle(.secondary)
-            Link("Manage Windy API keys",destination:URL(string:"https://api.windy.com/keys")!)
         }.padding(20).frame(maxWidth:.infinity,alignment:.leading).background(.white.opacity(0.04),in:RoundedRectangle(cornerRadius:14))
     }
 }

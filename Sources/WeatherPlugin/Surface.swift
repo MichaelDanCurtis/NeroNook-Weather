@@ -3,14 +3,20 @@ import NookPluginSDK
 import WeatherCore
 
 extension WeatherModule {
-    var customView: PluginCustomView { makeCustomView(allowFrames:supportsFrames) }
-    func makeCustomView(allowFrames:Bool) -> PluginCustomView {
+    var customView: PluginCustomView { makeCustomView(allowFrames:supportsFrames,allowHTTPS:supportsHTTPSFrames) }
+    func makeCustomView(allowFrames:Bool,allowHTTPS:Bool = true) -> PluginCustomView {
         var payload=Dashboard.payload(place:place,unit:unit,ready:located,automatic:preferences.automatic,feeds:feeds,errors:errors,loading:loading,message:locationMessage)
+        payload["mapProvider"]=preferences.mapProvider.rawValue
+        payload["earthURL"]=allowFrames && allowHTTPS ? "https://earth.nullschool.net/":""
+        payload["earthMessage"]=allowFrames && allowHTTPS ? "":"Update NeroNook to show Earth here, or open Observatory."
+        var frames:[PluginViewFrame]=[]
+        if allowFrames && allowHTTPS {frames.append(.init(url:"https://earth.nullschool.net/"))}
+        if allowFrames && !windyURL.isEmpty {frames.append(.init(url:windyURL))}
         payload["windyURL"]=allowFrames ? windyURL:""
         payload["windyMessage"]=allowFrames ? windyMessage:"Update NeroNook to show Windy here, or open Observatory."
         let bytes=(try? JSONSerialization.data(withJSONObject:payload,options:[.sortedKeys])) ?? Data()
         let data=bytes.count<=28000 ? String(data:bytes,encoding:.utf8) ?? "{}" : "{\"ready\":false,\"message\":\"Weather data exceeded the view limit. Open settings to refresh.\"}"
-        return .init(entry:"observatory.html",revision:"observatory3",state:["data":.string(data)],events:[.init("settings"),.init("alerts"),.init("refresh"),.init("windySettings"),.init("unit",input:.init([.init("unit",.string)]))],resourceNamespaces:["tiles"],frames:allowFrames && !windyURL.isEmpty ? [.init(url:windyURL)]:nil)
+        return .init(entry:"observatory.html",revision:"observatory4",state:["data":.string(data)],events:[.init("settings"),.init("alerts"),.init("refresh"),.init("windySettings"),.init("mapProvider",input:.init([.init("provider",.string)])),.init("unit",input:.init([.init("unit",.string)]))],resourceNamespaces:["tiles"],frames:frames.isEmpty ? nil:frames)
     }
     func handleViewEvent(_ event: PluginViewEvent) throws {
         guard event.panelID=="observatory" else { throw ModuleProblem("Unknown weather view.") }
@@ -20,6 +26,7 @@ extension WeatherModule {
         case "alerts": showSettings("Alerts")
         case "refresh": refresh()
         case "windySettings": showSettings("Sources")
+        case "mapProvider": if case .string(let value)=event.values["provider"] { setMapProvider(value) }
         case "unit": if case .string(let unit)=event.values["unit"] { setUnit(unit) }
         default: break
         }

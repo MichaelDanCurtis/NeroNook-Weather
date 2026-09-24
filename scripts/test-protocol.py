@@ -3,7 +3,7 @@
 import json, subprocess, pathlib, queue, threading, uuid
 root=pathlib.Path(__file__).resolve().parents[1]
 plugin='cafe.nero.plugin.weather'
-def check(modern, frames=False):
+def check(modern, frames=False, https=False):
  p=subprocess.Popen([str(root/'build/Weather Observatory.app/Contents/MacOS/WeatherPlugin'),'--neronook-plugin','--protocol-test'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True,bufsize=1)
  session=str(uuid.uuid4()); output=queue.Queue()
  def collect():
@@ -20,13 +20,15 @@ def check(modern, frames=False):
    if predicate(m):return m
   raise AssertionError('response limit')
  try:
-  features=(['isolated-frames-v1'] if frames else [])+['actions-v1','panels-v1','dashboard-v1','diagrams-v1']+(['custom-views-v1','view-resources-v1'] if modern else [])
+  features=(['https-frames-v1'] if https else [])+(['isolated-frames-v1'] if frames else [])+['actions-v1','panels-v1','dashboard-v1','diagrams-v1']+(['custom-views-v1','view-resources-v1'] if modern else [])
   send('hello',features=features);ready=wait_for(lambda m:m['type']=='ready');assert 'actions-v1' in ready['features'];assert ('isolated-frames-v1' in ready['features']) == frames
   snap=wait_for(lambda m:m['type']=='snapshot')['snapshot'];assert len(snap['activity'])<=100
   if modern:
    view=snap['panels'][0]['customView'];assert view['resourceNamespaces']==['tiles'];assert len(json.dumps(view['state']).encode())<32768
    assert json.loads(view['state']['data']).get('ready') in (True,False)
-   request=str(uuid.uuid4());send('viewResource',viewResource=dict(id=request,panelID='observatory',revision='observatory3',path='tiles/../secret'))
+   assert bool(view.get('frames')) == https
+   assert bool(json.loads(view['state']['data'])['earthURL']) == https
+   request=str(uuid.uuid4());send('viewResource',viewResource=dict(id=request,panelID='observatory',revision='observatory4',path='tiles/../secret'))
    result=wait_for(lambda m:m['type']=='viewResourceResult' and m['viewResourceResult']['id'].lower()==request.lower())['viewResourceResult'];assert result.get('error') and not result.get('data')
    request=str(uuid.uuid4());send('viewResource',viewResource=dict(id=request,panelID='other',revision='old',path='tiles/base/0/0/0/0'))
    result=wait_for(lambda m:m['type']=='viewResourceResult' and m['viewResourceResult']['id'].lower()==request.lower())['viewResourceResult'];assert result.get('error')
@@ -40,4 +42,4 @@ def check(modern, frames=False):
   p.stdin.close()
   try:p.wait(timeout=3)
   except subprocess.TimeoutExpired:p.terminate();p.wait(timeout=3)
-check(False);check(True);check(True,True)
+check(False);check(True);check(True,True);check(True,True,True)

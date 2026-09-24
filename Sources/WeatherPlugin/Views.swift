@@ -13,7 +13,7 @@ struct ObservatoryView:View {
   HStack{Picker("View",selection:$model.tab){ForEach(settingsOnly ? ["Location","Sources","Alerts"]:["Now","Forecast","Marine","Map","Alerts","Sources","Location"],id:\.self){Text($0)}}.pickerStyle(.segmented).labelsHidden()}.padding(.horizontal,22).padding(.bottom,16)
   if model.preferences.automatic && !model.located && model.tab != "Location" {VStack(spacing:20){Image(systemName:"location.circle").font(.system(size:64)).foregroundStyle(teal);Text("Weather where you are").font(.largeTitle.bold());Text(model.locationMessage).foregroundStyle(.secondary);Button("Set up location"){model.tab="Location"}.buttonStyle(.borderedProminent)}.frame(maxWidth:.infinity,maxHeight:.infinity)}
   else {ScrollView {Group{switch model.tab{case "Now":now;case "Forecast":forecast;case "Marine":marine;case "Map":maps;case "Alerts":alerts;case "Sources":sources;default:location}}.padding(.horizontal,22).padding(.bottom,22)}}
-  HStack{Text(model.status);Spacer();Text("Weather Observatory · 0.3.0")}.font(.caption).foregroundStyle(.secondary).padding(12).background(.black.opacity(0.15))
+  HStack{Text(model.status);Spacer();Text("Weather Observatory · 0.4.0")}.font(.caption).foregroundStyle(.secondary).padding(12).background(.black.opacity(0.15))
  }.background(Color(red:0.045,green:0.075,blue:0.115)).preferredColorScheme(.dark)
  }
  private var now:some View{VStack(alignment:.leading,spacing:18){
