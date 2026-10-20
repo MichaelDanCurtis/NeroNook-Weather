@@ -45,6 +45,6 @@ struct WeatherSurface: View {
     @ObservedObject var model: WeatherModule
     var body: some View {
         PluginWebSurface(root:Bundle.main.resourceURL!.appendingPathComponent("Views"),panelID:"observatory",definition:model.makeCustomView(allowFrames:true),onResource:{try await model.resource($0)}) { try model.handleViewEvent($0) }
-            .aspectRatio(16/9,contentMode:.fit).frame(maxWidth:.infinity,maxHeight:.infinity).background(Color(red:0.045,green:0.068,blue:0.10)).preferredColorScheme(.dark)
+            .aspectRatio(16/9,contentMode:.fit).frame(maxWidth:.infinity,maxHeight:.infinity).background(Color.clear)
     }
 }

@@ -1,4 +1,5 @@
 import SwiftUI
+import NookPluginSDK
 import WebKit
 struct WeatherMap:NSViewRepresentable {
  @ObservedObject var model:WeatherModule

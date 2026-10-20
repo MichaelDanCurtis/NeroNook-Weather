@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import NookPluginSDK
 import WebKit
 import WeatherCore
 
@@ -13,7 +14,7 @@ struct EarthViewer: View {
         VStack(spacing: 0) {
             HStack {
                 Text("Earth by Nullschool").font(.headline)
-                Text("Public viewer · earth.nullschool.net").font(.caption).foregroundStyle(.secondary)
+                Text("Public viewer · earth.nullschool.net").font(.caption).pluginSecondaryText()
                 Spacer()
                 Button("Reload") { unavailable = false; reloadID = UUID() }
             }.padding(12).background(.black.opacity(0.15))
@@ -22,7 +23,7 @@ struct EarthViewer: View {
             } else {
                 EarthPage(url:url,onFailure:{ unavailable = true }).id(reloadID)
             }
-        }.frame(minWidth:720,minHeight:480).preferredColorScheme(.dark)
+        }.frame(minWidth:720,minHeight:480)
     }
 }
 private struct EarthPage: NSViewRepresentable {

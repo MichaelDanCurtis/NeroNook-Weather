@@ -10,3 +10,13 @@ Resources/Web/images/
 Resources/Views/leaflet*
 Resources/Views/images/
 Resources/Windy/leaflet.js
+
+reports/
+.serena/
+__pycache__/
+*.app/
+*.dSYM/
+*.xcarchive/
+.env
+.env.*
+!.env.example
