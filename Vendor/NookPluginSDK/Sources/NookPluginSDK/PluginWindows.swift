@@ -12,7 +12,7 @@ import SwiftUI
             window = NSWindow(contentRect: NSRect(origin: .zero, size: size), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
             window.isReleasedWhenClosed = false; window.center(); windows[id] = window
         }
-        window.title = title; window.contentView = NSHostingView(rootView: content())
+        window.title = title; window.contentView = NSHostingView(rootView: PluginThemedRoot { content() })
         NSApp.activate(ignoringOtherApps: true); window.makeKeyAndOrderFront(nil)
     }
     public func close(_ id: String) { windows.removeValue(forKey: id)?.close() }

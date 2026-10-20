@@ -14,15 +14,25 @@ cp node_modules/leaflet-windy/LICENSE Resources/WINDY-LEAFLET-LICENSE
 npm run build:worker
 swift build -c release
 bin="$(swift build -c release --show-bin-path)"
-app="$PWD/build/Weather Observatory.app"
+mkdir -p "$PWD/build"
+reference="$PWD/build/Weather Observatory.app"
+identity="$(python3 scripts/signing.py identity --bundle cafe.nero.plugin.weather --reference "$reference")"
+staging="$(mktemp -d "$PWD/build/.weather-package.XXXXXX")"
+trap 'rm -rf "$staging"' EXIT
+app="$staging/Weather Observatory.app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Helpers" "$app/Contents/Resources"
+cp -R "$bin/NookPluginSDK_NookPluginSDK.bundle" "$app/Contents/Resources/"
 cp "$bin/WeatherPlugin" "$app/Contents/MacOS/WeatherPlugin"
 cp Runtime/node "$app/Contents/Helpers/weather-node"
 cp Runtime/NODE-LICENSE "$app/Contents/Resources/"
 cp -R Resources/. "$app/Contents/Resources/"
 cat > "$app/Contents/Info.plist" <<'PLIST'
-<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>CFBundleIdentifier</key><string>cafe.nero.plugin.weather</string><key>CFBundleName</key><string>Weather Observatory</string><key>CFBundleExecutable</key><string>WeatherPlugin</string><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleShortVersionString</key><string>0.4.0</string><key>CFBundleVersion</key><string>4</string><key>LSMinimumSystemVersion</key><string>14.0</string><key>LSUIElement</key><true/><key>NSLocationUsageDescription</key><string>Show weather for this Mac's location. Rounded coordinates are sent to the weather providers.</string><key>NSLocationWhenInUseUsageDescription</key><string>Show weather for this Mac's location. You can choose a place manually instead.</string></dict></plist>
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>CFBundleIdentifier</key><string>cafe.nero.plugin.weather</string><key>CFBundleName</key><string>Weather Observatory</string><key>CFBundleExecutable</key><string>WeatherPlugin</string><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleShortVersionString</key><string>0.4.3</string><key>CFBundleVersion</key><string>6</string><key>LSMinimumSystemVersion</key><string>14.0</string><key>LSUIElement</key><true/><key>NSLocationUsageDescription</key><string>Show weather for this Mac's location. Rounded coordinates are sent to the weather providers.</string><key>NSLocationWhenInUseUsageDescription</key><string>Show weather for this Mac's location. You can choose a place manually instead.</string></dict></plist>
 PLIST
-codesign --force --sign "${NERONOOK_SIGNING_IDENTITY:--}" "$app/Contents/Helpers/weather-node"
-codesign --force --sign "${NERONOOK_SIGNING_IDENTITY:--}" "$app"
+python3 scripts/signing.py sign --identity "$identity" "$app/Contents/Helpers/weather-node"
+python3 scripts/signing.py sign --identity "$identity" "$app"
 codesign --verify --deep --strict "$app"
+
+python3 scripts/signing.py verify --reference "$reference" "$app"
+if [[ -d "$reference" ]]; then mv "$reference" "$PWD/build/Weather Observatory.previous.$(date +%Y%m%d%H%M%S).app"; fi
+mv "$app" "$reference"

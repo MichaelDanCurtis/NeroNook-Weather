@@ -68,9 +68,16 @@ function renderCoast(){const m=state.marine||{},station=state.tideStation||{},cu
  const h=state.marineHours||{};$('wave-hours').replaceChildren();(h.time||[]).forEach((t,i)=>{if(i%3!==0||i>21)return;const div=document.createElement('div');div.innerHTML=`<small>${time(t,{hour:'numeric'})}</small><strong>${height(h.wave_height?.[i])} <small>${heightUnit()}</small></strong><span>${num(h.wave_period?.[i],1)} s period</span>`;$('wave-hours').append(div)});
  text('coast-source',`Marine ${age(state.fetched?.marine)} · Tides ${age(state.fetched?.tides)}`);text('coast-health',state.errors?.marine||state.errors?.tides?'Some coast data unavailable / stale':!finite(m.wave_height)?'Wave model unavailable here':'');
 }
-let map=null,baseTiles=null,overlay=null,coverage=null,marker=null,mapLocation='',savedMap=null,mapKey='',timer=null,playing=false,baseFailed=false,overlayFailed=false,overlayLoaded=false,windGroup=null;
+let map=null,baseTiles=null,overlay=null,coverage=null,marker=null,mapLocation='',savedMap=null,mapKey='',timer=null,playing=false,baseFailed=false,overlayFailed=false,overlayLoaded=false,windGroup=null,mapResize=null;
+function watchMapSize(){
+ mapResize?.disconnect();mapResize=null;
+ if(!map||typeof ResizeObserver==='undefined')return;
+ const current=map;
+ mapResize=new ResizeObserver(()=>{if(map===current)current.invalidateSize({pan:false,debounceMoveend:true})});
+ mapResize.observe($('map'));
+}
 const tileURL=(kind,id)=>`nook-view://surface/_plugin/tiles/${kind}/${id}/{z}/{x}/{y}`;
-function destroyRaster(){stopPlay();if(map){savedMap={center:map.getCenter(),zoom:map.getZoom(),place:mapLocation};map.remove()}map=null;baseTiles=overlay=coverage=marker=windGroup=null;mapKey=''}
+function destroyRaster(){stopPlay();mapResize?.disconnect();mapResize=null;if(map){savedMap={center:map.getCenter(),zoom:map.getZoom(),place:mapLocation};map.remove()}map=null;baseTiles=overlay=coverage=marker=windGroup=null;mapKey=''}
 let windyFrame=null,windyBase="",recenterCount=0,providerSignature="";
 function destroyWindy(){windyFrame?.remove();windyFrame=null;windyBase="";providerSignature=""}
 function destroyMap(){destroyRaster();destroyWindy()}
@@ -106,7 +113,7 @@ function setupMap(){if(map)return;map=L.map('map',{zoomControl:false,attribution
  baseTiles=L.tileLayer(tileURL('base','0'),{maxZoom:12,keepBuffer:0,className:'basemap-tile',updateWhenIdle:true}).on('tileerror',()=>{baseFailed=true;mapNotice()}).addTo(map);
  const p=state.place;mapLocation=p.id;map.setView(savedMap?.place===p.id?savedMap.center:[p.lat,p.lon],savedMap?.place===p.id?savedMap.zoom:7);
  marker=L.circleMarker([p.lat,p.lon],{radius:5,color:'#dbfff2',weight:2,fillColor:'#54c6a5',fillOpacity:1}).addTo(map);marker.bindTooltip(document.createTextNode(p.name));
- map.on('movestart',()=>stopPlay());map.invalidateSize();
+ map.on('movestart',()=>stopPlay());map.invalidateSize();watchMapSize();
 }
 function frames(){return layer==='radar'?state.radar||[]:layer==='infrared'?state.satellite||[]:[]}
 function frameTime(frame){return typeof frame==='object'?frame.time:frame}

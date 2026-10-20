@@ -1,3 +1,5 @@
+**October 17–18 · local 0.4.1 installed:** Map controls, legend, timeline and attribution have separate space; radar colors retain their scale and raster resizing preserves exploration. 9 Swift / 16 worker tests and native maps on both displays pass. Automatic location, Fahrenheit and saved Windy remain selected. [Evidence and limits](reports/rough-edges-2026-10-17/README.md). No public update.
+
 # Weather Observatory 0.1.0 acceptance
 
 September 22, 2026. Independently built and installed in NeroNook. No host implementation changes. Native module and bundled worker are both running from the installed plugin package; no source checkout, development server, system Node or other desktop app is required at runtime.

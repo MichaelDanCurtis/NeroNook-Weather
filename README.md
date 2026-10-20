@@ -1,3 +1,9 @@
+**October 19 · local 0.4.3:** Nearly Nothing refinement: softer shared glass and controls, compact fit review and paired Light/Dark. Local package installed; visual checks do not imply fresh audio, device or network acceptance. [Evidence and limits](../NeroNook/reports/nearly-nothing-refinement-2026-10-18/README.md). No public update.
+
+**October 18 · local 0.4.2 installed:** shared glass, paired Light/Dark, independent bundled presence/particle artwork and component motion. Saved connection/settings remain scoped to this plugin. [Rollout evidence and limits](../NeroNook/reports/redesign-ember-2026-10-18/README.md). No public release.
+
+**October 17–18 · local 0.4.1 installed:** Map controls, legend, timeline and attribution have separate space; radar colors retain their scale and raster resizing preserves exploration. 9 Swift / 16 worker tests and native maps on both displays pass. Automatic location, Fahrenheit and saved Windy remain selected. [Evidence and limits](reports/rough-edges-2026-10-17/README.md). No public update.
+
 # Weather Observatory for NeroNook
 
 Independent native macOS module, version 0.4.0. Forecast / Map / Coast share a custom widescreen interface inside the Nook and in the larger independent window. Explore hourly weather, daily details, observed radar/infrared history, selectable Earth and Windy wind/temperature maps and nearby tides. Location, units, source health and full alerts are behind the gear.
