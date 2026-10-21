@@ -1,3 +1,6 @@
 # Preserve upstream license text exactly, including its original whitespace.
 Resources/LEAFLET-LICENSE -whitespace
 Runtime/NODE-LICENSE -whitespace
+
+# Generated renderer includes upstream GLSL string indentation.
+**/Resources/avatar-renderer.js -whitespace
